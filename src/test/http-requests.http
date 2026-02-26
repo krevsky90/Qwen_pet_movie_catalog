@@ -1,0 +1,52 @@
+###
+# curl --location 'http://localhost:8080/api/v1/movies'
+#--header 'Content-Type: application/json'
+#--data '{
+#    "title": "movie111",
+#    "year": 1999,
+#    "genre": "Comedy"
+#}'
+POST http://localhost:8080/api/v1/movies
+Content-Type: application/json
+
+{
+  "title": "movie111",
+  "year": 1999,
+  "genre": "Comedy"
+}
+
+###
+# curl --location 'http://localhost:8080/api/v1/movies/2'
+GET http://localhost:8080/api/v1/movies/2
+
+###
+# curl --location 'http://localhost:8080/api/v1/movies'
+GET http://localhost:8080/api/v1/movies
+
+
+###
+# curl --location --request PUT 'http://localhost:8080/api/v1/movies/2'
+#--header 'Content-Type: application/json'
+#--data '{
+#  "title": "movie111_updated",
+#  "year": 1999,
+#  "genre": "Comedy"
+#}'
+PUT http://localhost:8080/api/v1/movies/2
+Content-Type: application/json
+
+{
+  "title": "movie111_updated",
+  "year": 1999,
+  "genre": "Comedy"
+}
+
+###
+DELETE http://localhost:8080/api/v1/movies/3
+
+
+
+
+
+
+

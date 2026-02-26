@@ -9,6 +9,7 @@ best practice:
     testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
 2) для тестов юзаем assertj
  т.е. import static org.assertj.core.api.Assertions.assertThat;
+3) аннотация @Transactional используется во всех методах сервиса, к-ые меняют данные
 
 
 ---------------
