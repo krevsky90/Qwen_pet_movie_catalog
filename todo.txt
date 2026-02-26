@@ -6,6 +6,9 @@ backlog:
 todo:
     НАПИСАТЬ @Controller класс и посмотреть, что он возвращает (HttpEntity?)
 
+todo:
+    Напиши 1-2 интеграционных теста для контроллера через @SpringBootTest + TestContainers (или изолированных через @WebMvcTest).
+
 улучшения:
 0) для полей createdAt, updatedAt используются:
     - JpaAuditConfig класс

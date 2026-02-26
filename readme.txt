@@ -20,6 +20,18 @@ best practice:
         НО по умолчанию исключение обрабатывается с помощью Spring Boot's Default Handler (BasicErrorController),
         к-ый возвращает стандартный JSON без деталей валидации:
                 { "status": 400, "error": "Bad Request", ... }
+    РЕШЕНИЕ: добавить класс, к-ый вернет понятный JSON: GlobalExceptionHandler с аннотацией @RestControllerAdvice
+        тогда ответ будет:
+            {
+              "timestamp": "2026-02-26T22:57:15.6403065",
+              "status": 400,
+              "error": "Validation failed",
+              "errors": {
+                "year": "Year too old",
+                "title": "Title is required"
+              },
+              "message": "Check the 'errors' field for details"
+            }
 
 ---------------
  Проблема 1:
