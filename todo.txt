@@ -3,8 +3,18 @@ backlog:
 1.2) прикрутить прогон тестов к github или gitlab
 
 
-
+todo:
+    НАПИСАТЬ @Controller класс и посмотреть, что он возвращает (HttpEntity?)
 
 улучшения:
+0) для полей createdAt, updatedAt используются:
+    - JpaAuditConfig класс
+    - аннотации в Movie-классе:
+        @EntityListeners(AuditingEntityListener.class) - над классом
+        @CreatedDate, @LastModifiedDate - над полями
+
 1) Когда фильмов станет много, добавь пагинацию: Page<Movie> findByGenre(String genre, Pageable pageable);
+    теория и пример: https://chat.qwen.ai/c/dcf71649-f89b-4c65-9215-023f9bace423
+
 2) для корректного написания hashcode() и equals() - Для Enterprise-уровня гугли паттерн "Effective Java Item 10 + JPA" или используй библиотеку EqualsVerifier
+

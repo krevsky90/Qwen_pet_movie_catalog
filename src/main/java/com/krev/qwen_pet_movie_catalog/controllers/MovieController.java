@@ -3,13 +3,14 @@ package com.krev.qwen_pet_movie_catalog.controllers;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.services.MovieService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/movies")
@@ -42,9 +43,15 @@ public class MovieController {
     }
 
     @GetMapping
-    public ResponseEntity<List<MovieResponse>> getMovies() {
-        List<MovieResponse> allMovies = movieService.findAllMovies();
-        return ResponseEntity.ok(allMovies);
+    public Page<MovieResponse> getMovies(Pageable pageable) {
+        Page<MovieResponse> allMovies = movieService.findAllMovies(pageable);
+        return allMovies;
+    }
+
+    @GetMapping("/search")
+    public Page<MovieResponse> searchMovies(@RequestParam String title, Pageable pageable) {
+        Page<MovieResponse> foundMovies = movieService.searchMovies(title, pageable);
+        return foundMovies;
     }
 
     @PutMapping("/{id}")

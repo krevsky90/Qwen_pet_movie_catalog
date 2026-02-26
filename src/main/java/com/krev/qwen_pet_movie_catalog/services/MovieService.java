@@ -5,14 +5,14 @@ import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.entity.Movie;
 import com.krev.qwen_pet_movie_catalog.mapper.MovieMapper;
 import com.krev.qwen_pet_movie_catalog.repo.MovieRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class MovieService {
@@ -38,9 +38,14 @@ public class MovieService {
         return repository.findById(id).map(movieMapper::toDto);
     }
 
-    public List<MovieResponse> findAllMovies() {
-        List<Movie> movies = repository.findAll();
-        return movies.stream().map(movieMapper::toDto).collect(Collectors.toUnmodifiableList());
+    public Page<MovieResponse> findAllMovies(Pageable pageable) {
+        Page<Movie> movies = repository.findAll(pageable);
+        return movies.map(movieMapper::toDto);
+    }
+
+    public Page<MovieResponse> searchMovies(String title, Pageable pageable) {
+        Page<Movie> movies = repository.findByTitleContaining(title, pageable);
+        return movies.map(movieMapper::toDto);
     }
 
     @Transactional
