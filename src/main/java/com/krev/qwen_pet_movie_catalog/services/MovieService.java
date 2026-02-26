@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,8 +29,6 @@ public class MovieService {
     @Transactional
     public MovieResponse createMovie(MovieRequest requestDto) {
         Movie movieToSave = movieMapper.toEntity(requestDto);
-        movieToSave.setCreatedAt(LocalDateTime.now());
-        movieToSave.setUpdatedAt(LocalDateTime.now());
         Movie savedMovie = repository.save(movieToSave);
 
         return movieMapper.toDto(savedMovie);
@@ -51,7 +48,6 @@ public class MovieService {
         return repository.findById(id)
                 .map(movie -> {
                     movieMapper.updateEntityFromRequest(requestDto, movie);
-                    movie.setUpdatedAt(LocalDateTime.now());
                     Movie saved = repository.save(movie);
                     return movieMapper.toDto(saved);
                 });
