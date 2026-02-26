@@ -1,3 +1,10 @@
 backlog:
 1) настроить CI/CD процесс
 1.2) прикрутить прогон тестов к github или gitlab
+
+
+
+
+улучшения:
+1) Когда фильмов станет много, добавь пагинацию: Page<Movie> findByGenre(String genre, Pageable pageable);
+2) для корректного написания hashcode() и equals() - Для Enterprise-уровня гугли паттерн "Effective Java Item 10 + JPA" или используй библиотеку EqualsVerifier

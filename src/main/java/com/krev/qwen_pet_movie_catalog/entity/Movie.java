@@ -64,12 +64,16 @@ public class Movie {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Movie movie = (Movie) o;
-        return Objects.equals(id, movie.id) && Objects.equals(title, movie.title) && Objects.equals(year, movie.year) && Objects.equals(genre, movie.genre);
+        // Сравниваем только если id есть, иначе - по бизнес-ключам
+        if (id != null && movie.id != null) return Objects.equals(id, movie.id);
+
+        return Objects.equals(title, movie.title) && Objects.equals(year, movie.year);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, year, genre);
+        // Простая реализация: если есть ID - хэшируем его, иначе - бизнес-ключи
+        return Objects.hash(id != null ? id : Objects.hash(title, year));
     }
 
     @Override

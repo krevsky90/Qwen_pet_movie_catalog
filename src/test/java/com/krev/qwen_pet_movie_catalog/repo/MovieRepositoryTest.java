@@ -4,10 +4,8 @@ import com.krev.qwen_pet_movie_catalog.entity.Movie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.jpa.test.autoconfigure.AutoConfigureDataJpa;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -61,8 +59,11 @@ public class MovieRepositoryTest {
         Optional<Movie> foundMovieOpt = repository.findByTitle(title);
 
         //Then
-        assertThat(foundMovieOpt).isPresent();
+        assertThat(foundMovieOpt).isPresent().hasValueSatisfying(movie -> {
+            assertThat(movie.getTitle()).isEqualTo(title);
+            assertThat(movie.getYear()).isEqualTo(year);
+            assertThat(movie.getGenre()).isEqualTo(genre);
+        });
         assertThat(savedMovie.getId()).isNotNull();
-        assertThat(foundMovieOpt.get().getTitle()).isEqualTo(title);
     }
 }

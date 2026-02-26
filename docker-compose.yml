@@ -2,9 +2,27 @@ services:
   movie-postgres:
     image: postgres:15
     container_name: movie_container
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Монтируем именованный том
     environment:
       POSTGRES_DB: movie_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    healthcheck:    # now it does not work. but for future
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     ports:
       - "5432:5432"
+
+#  app:
+#    build: .
+#    depends_on:
+#      movie-postgres:
+#        condition: service_healthy
+
+
+volumes:
+  pgdata:  # Определение именованного тома
