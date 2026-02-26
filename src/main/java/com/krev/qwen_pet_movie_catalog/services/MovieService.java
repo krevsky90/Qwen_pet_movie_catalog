@@ -50,9 +50,7 @@ public class MovieService {
     public Optional<MovieResponse> updateMovie(Long id, MovieRequest requestDto) {
         return repository.findById(id)
                 .map(movie -> {
-                    movie.setTitle(requestDto.title());
-                    movie.setGenre(requestDto.genre());
-                    movie.setYear(requestDto.year());
+                    movieMapper.updateEntityFromRequest(requestDto, movie);
                     movie.setUpdatedAt(LocalDateTime.now());
                     Movie saved = repository.save(movie);
                     return movieMapper.toDto(saved);
