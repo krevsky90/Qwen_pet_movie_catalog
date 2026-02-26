@@ -3,6 +3,7 @@ package com.krev.qwen_pet_movie_catalog.controllers;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.services.MovieService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -22,8 +23,7 @@ public class MovieController {
     }
 
     @PostMapping
-    //todo: add @Valid after @RequestBody
-    public ResponseEntity<MovieResponse> createMovie(@RequestBody MovieRequest requestDto,
+    public ResponseEntity<MovieResponse> createMovie(@RequestBody @Valid MovieRequest requestDto,
                                                      UriComponentsBuilder uriBuilder) {
         MovieResponse responseDto = movieService.createMovie(requestDto);
 
