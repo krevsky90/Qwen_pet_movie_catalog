@@ -10,7 +10,7 @@ POST http://localhost:8080/api/v1/movies
 Content-Type: application/json
 
 {
-  "title": "movie55",
+  "title": "movie551",
   "year": 1999,
   "genre": "Comedy"
 }
@@ -26,11 +26,11 @@ Content-Type: application/json
 
 ###
 # curl --location 'http://localhost:8080/api/v1/movies/2'
-GET http://localhost:8080/api/v1/movies/1
+GET http://localhost:8080/api/v1/movies/6
 
 ###
 # curl --location 'http://localhost:8080/api/v1/movies'
-GET http://localhost:8080/api/v1/movies?page=0&size=2
+GET http://localhost:8080/api/v1/movies?page=0&size=3
 
 
 ###
@@ -41,7 +41,7 @@ GET http://localhost:8080/api/v1/movies?page=0&size=2
 #  "year": 1999,
 #  "genre": "Comedy"
 #}'
-PUT http://localhost:8080/api/v1/movies/5
+PUT http://localhost:8080/api/v1/movies/4
 Content-Type: application/json
 
 {
@@ -54,7 +54,7 @@ Content-Type: application/json
 DELETE http://localhost:8080/api/v1/movies/2
 
 ###
-GET http://localhost:8080/api/v1/movies/search?title=movie111&page=0&size=2
+GET http://localhost:8080/api/v1/movies/search?title=movie111&page=0&size=1
 
 
 

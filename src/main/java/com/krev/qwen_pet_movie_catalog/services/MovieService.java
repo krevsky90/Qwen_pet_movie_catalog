@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+import static com.krev.qwen_pet_movie_catalog.configuration.CacheConstants.*;
+
 @Service
 public class MovieService {
     private final MovieRepository repository;
@@ -29,7 +31,7 @@ public class MovieService {
     }
 
     @Transactional
-    @CacheEvict(value = {"moviesList", "moviesSearch"}, allEntries = true)
+    @CacheEvict(value = {MOVIES_LIST, MOVIES_SEARCH}, allEntries = true)
     //NOTE: очищать все листовые кеши правильно, НО дорого, если создаем фильмы часто
     //альтернатива - очищать кеш программно и более точечно
     public MovieResponse createMovie(MovieRequest requestDto) {
@@ -39,18 +41,18 @@ public class MovieService {
         return movieMapper.toDto(savedMovie);
     }
 
-    @Cacheable(value = "movieById", key = "#id", unless = "#result == null")
+    @Cacheable(value = MOVIE_BY_ID, key = "#id", unless = "#result == null")
     public Optional<MovieResponse> findMovieById(Long id) {
         return repository.findById(id).map(movieMapper::toDto);
     }
 
-    @Cacheable(value = "moviesList", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + (#pageable.sort.toString() ?: '')")
+    @Cacheable(value = MOVIES_LIST, key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + (#pageable.sort.toString() ?: '')")
     public Page<MovieResponse> findAllMovies(Pageable pageable) {
         Page<Movie> movies = repository.findAll(pageable);
         return movies.map(movieMapper::toDto);
     }
 
-    @Cacheable(value = "moviesSearch", key = "#title + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = MOVIES_SEARCH, key = "#title + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<MovieResponse> searchMovies(String title, Pageable pageable) {
         Page<Movie> movies = repository.findByTitleContaining(title, pageable);
         return movies.map(movieMapper::toDto);
@@ -59,8 +61,8 @@ public class MovieService {
     // UPDATE: обновляем БД + сбрасываем кэш
     @Transactional   //NOTE: transactional should be BEFORE @Caching!
     @Caching(evict = {
-            @CacheEvict(value = "movieById", key = "#id"),   //invalidate cache for particular ID
-            @CacheEvict(value = {"moviesList", "moviesSearch"}, allEntries = true)
+            @CacheEvict(value = MOVIE_BY_ID, key = "#id"),   //invalidate cache for particular ID
+            @CacheEvict(value = {MOVIES_LIST, MOVIES_SEARCH}, allEntries = true)
     })
     public Optional<MovieResponse> updateMovie(Long id, MovieRequest requestDto) {
         return repository.findById(id)
@@ -73,8 +75,8 @@ public class MovieService {
 
     @Transactional  //NOTE: transactional should be BEFORE @Caching!
     @Caching(evict = {
-            @CacheEvict(value = "movieById", key = "#id"),   //invalidate cache for particular ID
-            @CacheEvict(value = {"moviesList", "moviesSearch"}, allEntries = true)
+            @CacheEvict(value = MOVIE_BY_ID, key = "#id"),   //invalidate cache for particular ID
+            @CacheEvict(value = {MOVIES_LIST, MOVIES_SEARCH}, allEntries = true)
     })
     public void deleteMovie(Long id) {
         Optional<Movie> byId = repository.findById(id);

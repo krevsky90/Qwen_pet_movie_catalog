@@ -58,7 +58,7 @@ best practice:
 6) для кеширования на уровне сервиса подключают Redis
     детальное объяснение тут: https://chat.qwen.ai/c/c015d832-5b0a-493a-b299-1ee1afbd1269
     и в общем чате https://chat.qwen.ai/c/314d58c3-a4bf-46df-bc5c-f2746e96371b
-    если
+    6.1) если
         spring.cache.redis.key-prefix=movie:
         и
         @Cacheable(value = "movies", key = "#id")
@@ -66,12 +66,14 @@ best practice:
         то
         итоговый ключ в редисе movie:movies::55, где movie - key-prefix, movie - cacheName
 
-     внимание:
+    6.2) внимание:
         @Transactional should be BEFORE @Caching!
         По умолчанию @CacheEvict срабатывает ПОСЛЕ выполнения метода (beforeInvocation = false по умолчанию),
             так что если методы create/update упадут, то кеш не будет очищен
 
-
+    6.3) TTL надо задавать в проперти-файле
+    6.4) имена кешей надо задавать Java-константой (внимание! @CacheEvict и @Cacheable в MovieService НЕ умеют парсить SpEl из проперти-файла!)
+    6.5) конфигурации для конкретных кешей надо наследовать от базовой (см CacheConfig)
 
 ---------------
  Проблема 1:
