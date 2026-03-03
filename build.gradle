@@ -27,6 +27,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 
+    // it provides Spring's cache abstraction and auto-configuration for declarative caching (using annotations like @Cacheable, @CachePut, etc.)
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    // Spring Data Redis + Lettuce client
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
@@ -38,6 +43,8 @@ dependencies {
     testImplementation "org.testcontainers:testcontainers:${testcontainersVersion}"
     testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"  //it contains @Testcontainers
     testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
+    // TestContainers для Redis (в тестах)
+    testImplementation 'org.testcontainers:redpanda:1.19.3' // или 'redis:7-alpine'
 
     runtimeOnly 'org.postgresql:postgresql'
 

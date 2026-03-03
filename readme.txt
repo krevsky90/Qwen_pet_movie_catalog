@@ -55,6 +55,21 @@ best practice:
             End-to-End (E2E) тесты.
             Проверка взаимодействия всех слоев (Контроллер -> Сервис -> Репозиторий -> БД).
             Проверка корректности конфигурации приложения.
+6) для кеширования на уровне сервиса подключают Redis
+    детальное объяснение тут: https://chat.qwen.ai/c/c015d832-5b0a-493a-b299-1ee1afbd1269
+    и в общем чате https://chat.qwen.ai/c/314d58c3-a4bf-46df-bc5c-f2746e96371b
+    если
+        spring.cache.redis.key-prefix=movie:
+        и
+        @Cacheable(value = "movies", key = "#id")
+        public Movie getMovie(Long id) { ... }
+        то
+        итоговый ключ в редисе movie:movies::55, где movie - key-prefix, movie - cacheName
+
+     внимание:
+        @Transactional should be BEFORE @Caching!
+        По умолчанию @CacheEvict срабатывает ПОСЛЕ выполнения метода (beforeInvocation = false по умолчанию),
+            так что если методы create/update упадут, то кеш не будет очищен
 
 
 

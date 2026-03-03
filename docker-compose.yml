@@ -17,6 +17,15 @@ services:
     ports:
       - "5432:5432"
 
+  movie-redis:
+    image: redis:7-alpine
+    container_name: movie-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+
 #  app:
 #    build: .
 #    depends_on:
@@ -26,3 +35,4 @@ services:
 
 volumes:
   pgdata:  # Определение именованного тома
+  redisdata:
