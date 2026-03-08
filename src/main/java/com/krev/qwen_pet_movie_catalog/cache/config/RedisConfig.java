@@ -1,4 +1,4 @@
-package com.krev.qwen_pet_movie_catalog.configuration;
+package com.krev.qwen_pet_movie_catalog.cache.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.springframework.context.annotation.Bean;

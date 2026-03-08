@@ -1,9 +1,10 @@
 package com.krev.qwen_pet_movie_catalog.services;
 
+import com.krev.qwen_pet_movie_catalog.cache.CacheOperations;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.entity.Movie;
-import com.krev.qwen_pet_movie_catalog.helpers.RedisCacheHelper;
+import com.krev.qwen_pet_movie_catalog.cache.redis.RedisCacheHelper;
 import com.krev.qwen_pet_movie_catalog.mapper.MovieMapper;
 import com.krev.qwen_pet_movie_catalog.repo.MovieRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -23,11 +24,13 @@ public class MovieService {
     private final MovieRepository repository;
     private final MovieMapper movieMapper;  //внедрится автоматически
     private final RedisTemplate<String, Object> redisTemplate;
+    private final CacheOperations cacheOperations;
 
-    public MovieService(MovieRepository repository, MovieMapper movieMapper, RedisTemplate<String, Object> redisTemplate) {
+    public MovieService(MovieRepository repository, MovieMapper movieMapper, RedisTemplate<String, Object> redisTemplate, CacheOperations cacheOperations) {
         this.repository = repository;
         this.movieMapper = movieMapper;
         this.redisTemplate = redisTemplate;
+        this.cacheOperations = cacheOperations;
     }
 
     @Transactional
@@ -36,15 +39,15 @@ public class MovieService {
         Movie savedMovie = repository.save(movieToSave);
         MovieResponse result = movieMapper.toDto(savedMovie);
 
-        RedisCacheHelper.cacheEvictByPattern(redisTemplate, MOVIES_LIST);
-        RedisCacheHelper.cacheEvictByPattern(redisTemplate, MOVIES_SEARCH);
+        cacheOperations.cacheEvictByPattern(MOVIES_LIST);
+        cacheOperations.cacheEvictByPattern(MOVIES_SEARCH);
 
         return result;
     }
 
     //NOTE: cache should store DTO (JSON response), but not Entity!
     public Optional<MovieResponse> findMovieById(Long id) {
-        String key = RedisCacheHelper.cacheKeyBuild(MOVIE_BY_ID, id);
+        String key = cacheOperations.cacheKeyBuild(MOVIE_BY_ID, id);
         //try cache
         Object cached = redisTemplate.opsForValue().get(key);
         if (cached instanceof MovieResponse response) {
@@ -56,7 +59,7 @@ public class MovieService {
         // if found -> put to cache
         if (movieOpt.isPresent()) {
             MovieResponse movieResponse = movieMapper.toDto(movieOpt.get());
-            RedisCacheHelper.cachePut(redisTemplate, key, movieResponse, TTL_BY_ID);
+            cacheOperations.cachePut(key, movieResponse, TTL_BY_ID);
             return Optional.of(movieResponse);
         }
 
@@ -65,7 +68,7 @@ public class MovieService {
 
     public Page<MovieResponse> findAllMovies(Pageable pageable) {
         //example of key: movie:moviesList::03UNSORTED
-        String key = RedisCacheHelper.cacheKeyBuild(MOVIES_LIST,
+        String key = cacheOperations.cacheKeyBuild(MOVIES_LIST,
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
                 pageable.getSort().toString());
@@ -79,13 +82,13 @@ public class MovieService {
         //cache miss -> go to DB
         Page<MovieResponse> result = repository.findAll(pageable).map(movieMapper::toDto);
         //save to cache
-        RedisCacheHelper.cachePut(redisTemplate, key, result, TTL_LIST_SEARCH);
+        cacheOperations.cachePut(key, result, TTL_LIST_SEARCH);
 
         return result;
     }
 
     public Page<MovieResponse> searchMovies(String title, Pageable pageable) {
-        String key = RedisCacheHelper.cacheKeyBuild(MOVIES_SEARCH,
+        String key = cacheOperations.cacheKeyBuild(MOVIES_SEARCH,
                 title,
                 pageable.getPageNumber(),
                 pageable.getPageSize());
@@ -99,7 +102,7 @@ public class MovieService {
         //cache miss -> go to DB
         Page<MovieResponse> result = repository.findByTitleContaining(title, pageable).map(movieMapper::toDto);
         //save to cache
-        RedisCacheHelper.cachePut(redisTemplate, key, result, TTL_LIST_SEARCH);
+        cacheOperations.cachePut(key, result, TTL_LIST_SEARCH);
 
         return result;
     }
@@ -116,10 +119,10 @@ public class MovieService {
 
         if (result.isPresent()) {
             //invalidate byId/list/search caches
-            String key = RedisCacheHelper.cacheKeyBuild(MOVIE_BY_ID, id);
-            RedisCacheHelper.cacheEvict(redisTemplate, key);
-            RedisCacheHelper.cacheEvictByPattern(redisTemplate, MOVIES_LIST);
-            RedisCacheHelper.cacheEvictByPattern(redisTemplate, MOVIES_SEARCH);
+            String key = cacheOperations.cacheKeyBuild(MOVIE_BY_ID, id);
+            cacheOperations.cacheEvict(key);
+            cacheOperations.cacheEvictByPattern(MOVIES_LIST);
+            cacheOperations.cacheEvictByPattern(MOVIES_SEARCH);
         }
 
         return result;
@@ -131,10 +134,10 @@ public class MovieService {
             repository.deleteById(id);
 
             //invalidate caches
-            String key = RedisCacheHelper.cacheKeyBuild(MOVIE_BY_ID, id);
-            RedisCacheHelper.cacheEvict(redisTemplate, key);
-            RedisCacheHelper.cacheEvictByPattern(redisTemplate, MOVIES_LIST);
-            RedisCacheHelper.cacheEvictByPattern(redisTemplate, MOVIES_SEARCH);
+            String key = cacheOperations.cacheKeyBuild(MOVIE_BY_ID, id);
+            cacheOperations.cacheEvict(key);
+            cacheOperations.cacheEvictByPattern(MOVIES_LIST);
+            cacheOperations.cacheEvictByPattern(MOVIES_SEARCH);
         } else {
             throw new EntityNotFoundException("Movie with id " + id + " not found");
         }
