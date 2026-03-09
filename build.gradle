@@ -20,6 +20,7 @@ repositories {
 
 ext {
     testcontainersVersion = '1.19.3'
+    springBootVersion = '4.0.3'
 }
 
 dependencies {
@@ -42,15 +43,12 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 
     // for integration tests
+    testImplementation "org.springframework.boot:spring-boot-testcontainers:${springBootVersion}"   //to use @ServiceConnection
     testImplementation "org.testcontainers:testcontainers:${testcontainersVersion}"
     testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"  //it contains @Testcontainers
     testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
-    // TestContainers для Redis (в тестах)
-    testImplementation 'org.testcontainers:redpanda:1.19.3' // или 'redis:7-alpine'
 
     runtimeOnly 'org.postgresql:postgresql'
-
-//    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
