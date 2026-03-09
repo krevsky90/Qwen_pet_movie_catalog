@@ -6,4 +6,7 @@ public class CacheConstants {
     public static final String MOVIE_BY_ID = "movieById";
     public static final String MOVIES_LIST = "moviesList";
     public static final String MOVIES_SEARCH = "moviesSearch";
+
+    public static final String KEY_PREFIX = "movie:";
+    public static final String CACHE_DELIMITER = "::";
 }

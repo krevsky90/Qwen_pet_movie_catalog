@@ -47,19 +47,16 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     // for integration tests
+    testImplementation "org.springframework.boot:spring-boot-testcontainers"   //to use @ServiceConnection
     testImplementation "org.testcontainers:testcontainers:${testcontainersVersion}"
     testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"  //it contains @Testcontainers
     testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
-    // TestContainers для Redis (в тестах)
-//    testImplementation 'org.testcontainers:redis:7-alpine'
 
     // WireMock для тестирования внешних вызовов
 //    testImplementation 'org.wiremock:wiremock:3.3.1'
 //    testImplementation 'org.springframework.cloud:spring-cloud-contract-wiremock:4.1.0'
 
     runtimeOnly 'org.postgresql:postgresql'
-
-//    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 dependencyManagement {

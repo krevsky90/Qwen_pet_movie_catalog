@@ -47,7 +47,7 @@ public class CacheConfig {
         //RedisCacheConfiguration.defaultCacheConfig() - uses java-serialization by default
         RedisCacheConfiguration baseConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(ttlMovie) //default value for ALL caches
-                .computePrefixWith(cacheName -> cacheGlobalPrefix + cacheName + ":") //global prefix for all caches
+                .computePrefixWith(cacheName -> cacheGlobalPrefix + cacheName + CACHE_DELIMITER) //global prefix for all caches
                 .serializeKeysWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(
                                 new StringRedisSerializer()

@@ -10,6 +10,37 @@ best practice:
     testImplementation "org.testcontainers:testcontainers:${testcontainersVersion}"
     testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"  //it contains @Testcontainers
     testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
+    testImplementation "org.springframework.boot:spring-boot-testcontainers:${springBootVersion}"   //to use @ServiceConnection
+
+    в рамках тестируемого класса создаем контейнеры:
+    @Container
+    @ServiceConnection
+        static PostgreSQLContainer<?> postgreSQLContainer = ...
+    или
+        static GenericContainer<?> redisContainer = ...
+    NOTE: если нужен один контейнер на весь класс - то static.
+
+    @ServiceConnection - автоматически настраивает подключение к внешним сервисам
+        (БД, брокерам сообщений) в тестах, использующих Testcontainers,
+        устраняя необходимость ручного указания JDBC URL, логинов и паролей)
+    НО если нужны доп параметры - пишем рядом метод с аннотацией @DynamicPropertySource
+        Пример: MovieRepositoryTest или MovieServiceIntegrationTest
+
+    Best practice:
+        для тестов с постгрес над тестовыми методами ставим @Transactional
+        а c redis @Transactional не работает. поэтому юзаем
+            @BeforeEach
+            void clearCache() {
+                redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
+            }
+
+    ПРОБЛЕМА:
+        инъекция через конструктор не работает в интегр спрингбут тестах
+        т.к. junit сначала пытается создать инстанс класса (и падает), не доходя до обнаружения спринга.
+    РЕШЕНИЕ:
+        юзать @Autowired
+
+
 2) для тестов юзаем assertj
     т.е. import static org.assertj.core.api.Assertions.assertThat;
 2.2) для юнит-тестов правило:
@@ -61,6 +92,10 @@ best practice:
 6) для кеширования на уровне сервиса подключают Redis
     детальное объяснение тут: https://chat.qwen.ai/c/c015d832-5b0a-493a-b299-1ee1afbd1269
     и в общем чате https://chat.qwen.ai/c/314d58c3-a4bf-46df-bc5c-f2746e96371b
+
+    АРХИТЕКТУРНО: если объект создается/меняестся, то надежнее инвалидировать кеши, содержащие этот объект,
+            чем апдейтить кеш прямо в методе создания/апдейта объекта!
+
     6.1) если
         spring.cache.redis.key-prefix=movie:
         и
@@ -77,14 +112,30 @@ best practice:
     6.3) TTL надо задавать в проперти-файле
     6.4) имена кешей надо задавать Java-константой (внимание! @CacheEvict и @Cacheable в MovieService НЕ умеют парсить SpEl из проперти-файла!)
     6.5) конфигурации для конкретных кешей надо наследовать от базовой (см CacheConfig)
-7) для выноса пропертей из application.properties в бин
-    a) можно внедрить через @Value - типа 	@Value("${external.omdb.api-key}")
-        НО тогда это надо будет делать во всех классах, где будет юзаться это значение
-    b) создать record OmdbProperties c
-        @ConfigurationProperties(prefix = "external.omdb") - указывает, какие проперти буду читаться из application.properties
-        @EnableConfigurationProperties(OmdbProperties.class) - говорит спрингу зарегистрировать этот класс как бин
-        и внедрять его как бин
 
+7) если хотим использовать Redis напрямую (командами/java-кодом, а не кеш-аннотациями), то
+    полезно смотреть в redis-cli. команда для случая запуска в существующем локальном докер-контейнере редиса:
+        docker exec -it <container_name> redis-cli
+    7.1) cache should store DTO (JSON response), but not Entity!
+    7.2) если надо искать множество ключей, то НЕ делать redisTemplate.keys(..),
+        потому что keys блокирует весь редис.
+        Надо писать redisTemplate.scan(..) (см RedisCacheHelper # cacheEvictByPattern), к-ый будет читать ключи пачками по count.
+        Опять-таки, чем больше count, тем надольше редис блокируется. Нужен баланс
+    7.3) все команды касательно всего контента редиса тут:
+        redisTemplate.getConnectionFactory().getConnection().serverCommands()
+
+8) для улучшения перфоманса лучше ставить @Transactional(readOnly = true) над сервисом
+
+9) для выноса пропертей из application.properties в бин
+       a) можно внедрить через @Value - типа 	@Value("${external.omdb.api-key}")
+           НО тогда это надо будет делать во всех классах, где будет юзаться это значение
+       b) создать record OmdbProperties c
+           @ConfigurationProperties(prefix = "external.omdb") - указывает, какие проперти буду читаться из application.properties
+           @EnableConfigurationProperties(OmdbProperties.class) - говорит спрингу зарегистрировать этот класс как бин
+           и внедрять его как бин
+
+Архитектурно:
+1) НЕ создаем статич классов. Создаем интерфейсы + их имплементацию-бины с @Component. так проще работать и тестить (замокать интерфейс)
 ---------------
  Проблема 1:
     Использование id (суррогатного ключа) в equals/hashCode для сущностей JPA опасно:
@@ -92,3 +143,4 @@ best practice:
     - Проблема с коллекциями: Если положить новый объект в HashSet, а потом сделать save() (появится ID), хэш-код изменится. Объект "застрянет" в неправильном бакете, и ты его не найдешь или получишь дубликаты.
  Рекомендация для проекта:
     Для учебного проекта используй Business Key (уникальные бизнес-поля). Для фильма это комбинация title + year.
+
