@@ -9,9 +9,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class OmdbClientConfig {
-    @Value("${external.omdb.api-key}")
-    private String apiKey;
-
     //это логгирование для самого feign API, к-ое получает JSON-ответ
     // 🔥 Уровень 2: Feign Logger — генерирует логи запросов/ответов
     @Bean

@@ -74,6 +74,13 @@ best practice:
     6.3) TTL надо задавать в проперти-файле
     6.4) имена кешей надо задавать Java-константой (внимание! @CacheEvict и @Cacheable в MovieService НЕ умеют парсить SpEl из проперти-файла!)
     6.5) конфигурации для конкретных кешей надо наследовать от базовой (см CacheConfig)
+7) для выноса пропертей из application.properties в бин
+    a) можно внедрить через @Value - типа 	@Value("${external.omdb.api-key}")
+        НО тогда это надо будет делать во всех классах, где будет юзаться это значение
+    b) создать record OmdbProperties c
+        @ConfigurationProperties(prefix = "external.omdb") - указывает, какие проперти буду читаться из application.properties
+        @EnableConfigurationProperties(OmdbProperties.class) - говорит спрингу зарегистрировать этот класс как бин
+        и внедрять его как бин
 
 ---------------
  Проблема 1:

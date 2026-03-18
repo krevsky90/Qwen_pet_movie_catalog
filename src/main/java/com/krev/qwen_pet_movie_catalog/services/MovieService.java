@@ -1,5 +1,6 @@
 package com.krev.qwen_pet_movie_catalog.services;
 
+import com.krev.qwen_pet_movie_catalog.configuration.properties.OmdbProperties;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.entity.Movie;
@@ -30,13 +31,15 @@ public class MovieService {
     private final MovieRepository repository;
     private final MovieMapper movieMapper;  //внедрится автоматически
     private final OmdbClient omdbClient;
+    private final OmdbProperties omdbProperties;
 
     //NOTE: После добавления MapStruct пересобери проект (./gradlew build),
     // иначе IDE может не видеть сгенерированный класс MovieMapperImpl
-    public MovieService(MovieRepository repository, MovieMapper movieMapper, OmdbClient omdbClient) {
+    public MovieService(MovieRepository repository, MovieMapper movieMapper, OmdbClient omdbClient, OmdbProperties omdbProperties) {
         this.repository = repository;
         this.movieMapper = movieMapper;
         this.omdbClient = omdbClient;
+        this.omdbProperties = omdbProperties;
     }
 
     @Transactional
@@ -99,7 +102,7 @@ public class MovieService {
 
     private void enrichMovieFromExternalApi(Movie movie, String title, Integer year) {
         try {
-            OmdbResponse externalData = omdbClient.getMovieByTitleAndYear("9f037f28", title, year);
+            OmdbResponse externalData = omdbClient.getMovieByTitleAndYear(omdbProperties.apiKey(), title, year);
 
             if (TRUE.equalsIgnoreCase(externalData.response())) {
                 movie.setPoster(externalData.poster());
