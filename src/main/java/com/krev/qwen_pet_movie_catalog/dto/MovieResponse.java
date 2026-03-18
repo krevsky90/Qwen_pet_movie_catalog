@@ -7,9 +7,13 @@ public record MovieResponse(
         String title,
         Integer year,
         String genre,
+        String poster,
+        String imdbRating,
+        String plot,
+        String director,
 //        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")    //jackson
         LocalDateTime createdAt,
-//        @JsonFormat(pattern = "yyyy-MM-dd'T"HH:mm:ss")    //jackson
+//        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")    //jackson
         LocalDateTime updatedAt
 ) {
 }

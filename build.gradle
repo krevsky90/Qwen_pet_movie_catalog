@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.3'
+    id 'org.springframework.boot' version '3.4.3'
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -20,37 +20,53 @@ repositories {
 
 ext {
     testcontainersVersion = '1.19.3'
+    springCloudVersion = '2024.0.0'
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // it provides Spring's cache abstraction and auto-configuration for declarative caching (using annotations like @Cacheable, @CachePut, etc.)
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     // Spring Data Redis + Lettuce client
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // Feign Client (декларативные HTTP-клиенты)
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     // Для сериализации объектов в JSON (вместо стандартного Java-сериализатора)
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-//    testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    // Resilience4j для таймаутов и повторов (опционально, но рекомендуется)
+//    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+//    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     // for integration tests
     testImplementation "org.testcontainers:testcontainers:${testcontainersVersion}"
     testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"  //it contains @Testcontainers
     testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
     // TestContainers для Redis (в тестах)
-    testImplementation 'org.testcontainers:redpanda:1.19.3' // или 'redis:7-alpine'
+//    testImplementation 'org.testcontainers:redis:7-alpine'
+
+    // WireMock для тестирования внешних вызовов
+//    testImplementation 'org.wiremock:wiremock:3.3.1'
+//    testImplementation 'org.springframework.cloud:spring-cloud-contract-wiremock:4.1.0'
 
     runtimeOnly 'org.postgresql:postgresql'
 
 //    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        // Обязательно: BOM для управления версиями Spring Cloud
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
 }
 
 tasks.named('test') {

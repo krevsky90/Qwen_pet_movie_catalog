@@ -1,5 +1,6 @@
 package com.krev.qwen_pet_movie_catalog.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -7,10 +8,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import tools.jackson.databind.ObjectMapper;
+//import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.util.Map;
@@ -33,6 +34,13 @@ public class CacheConfig {
     @Value("${app.cache.ttl.movies-search:5m}")
     private Duration ttlMoviesSearch;
 
+    // Внедряем автоконфигурированный ObjectMapper от Spring Boot
+    private final ObjectMapper objectMapper;
+
+    public CacheConfig(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
     // используем JSON-сериализацию вместо Java-сериализатора по умолчанию
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
@@ -47,7 +55,7 @@ public class CacheConfig {
                 )
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(
-                                new GenericJacksonJsonRedisSerializer(new ObjectMapper())
+                                new GenericJackson2JsonRedisSerializer(objectMapper)
                         )
                 );
 

@@ -3,9 +3,13 @@ package com.krev.qwen_pet_movie_catalog.services;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.entity.Movie;
+import com.krev.qwen_pet_movie_catalog.external.omdb.OmdbClient;
+import com.krev.qwen_pet_movie_catalog.external.omdb.dto.OmdbResponse;
 import com.krev.qwen_pet_movie_catalog.mapper.MovieMapper;
 import com.krev.qwen_pet_movie_catalog.repo.MovieRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -20,14 +24,19 @@ import static com.krev.qwen_pet_movie_catalog.configuration.CacheConstants.*;
 
 @Service
 public class MovieService {
+    public static final String TRUE = "True";
+    private final static Logger LOGGER = LoggerFactory.getLogger(MovieService.class);
+
     private final MovieRepository repository;
     private final MovieMapper movieMapper;  //внедрится автоматически
+    private final OmdbClient omdbClient;
 
     //NOTE: После добавления MapStruct пересобери проект (./gradlew build),
     // иначе IDE может не видеть сгенерированный класс MovieMapperImpl
-    public MovieService(MovieRepository repository, MovieMapper movieMapper) {
+    public MovieService(MovieRepository repository, MovieMapper movieMapper, OmdbClient omdbClient) {
         this.repository = repository;
         this.movieMapper = movieMapper;
+        this.omdbClient = omdbClient;
     }
 
     @Transactional
@@ -36,6 +45,7 @@ public class MovieService {
     //альтернатива - очищать кеш программно и более точечно
     public MovieResponse createMovie(MovieRequest requestDto) {
         Movie movieToSave = movieMapper.toEntity(requestDto);
+        enrichMovieFromExternalApi(movieToSave, movieToSave.getTitle(), movieToSave.getYear());
         Movie savedMovie = repository.save(movieToSave);
 
         return movieMapper.toDto(savedMovie);
@@ -84,6 +94,23 @@ public class MovieService {
             repository.deleteById(id);
         } else {
             throw new EntityNotFoundException("Movie with id " + id + " not found");
+        }
+    }
+
+    private void enrichMovieFromExternalApi(Movie movie, String title, Integer year) {
+        try {
+            OmdbResponse externalData = omdbClient.getMovieByTitleAndYear("9f037f28", title, year);
+
+            if (TRUE.equalsIgnoreCase(externalData.response())) {
+                movie.setPoster(externalData.poster());
+                movie.setImdbRating(externalData.imdbRating());
+                movie.setPlot(externalData.plot());
+                movie.setDirector(externalData.director());
+            }
+        } catch (Exception ex) {
+            LOGGER.warn("Failed to enrich movie '{} ({})' from omdb: {}", title, year, ex.getMessage());
+            LOGGER.warn("", ex);
+            // Не прерываем создание фильма — просто без обогащения
         }
     }
 }

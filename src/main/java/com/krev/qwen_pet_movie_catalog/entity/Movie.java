@@ -23,13 +23,19 @@ public class Movie {
 
     private String genre;
 
+    private String poster;        // URL постера
+    private String imdbRating;    // рейтинг
+    private String plot;          // описание
+    private String director;      // режиссёр
+
     @CreatedDate
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    public Movie() {}
+    public Movie() {
+    }
 
     public Movie(Long id, String title, Integer year, String genre) {
         this.id = id;
@@ -68,6 +74,38 @@ public class Movie {
 
     public void setGenre(String genre) {
         this.genre = genre;
+    }
+
+    public String getPoster() {
+        return poster;
+    }
+
+    public void setPoster(String poster) {
+        this.poster = poster;
+    }
+
+    public String getImdbRating() {
+        return imdbRating;
+    }
+
+    public void setImdbRating(String imdbRating) {
+        this.imdbRating = imdbRating;
+    }
+
+    public String getPlot() {
+        return plot;
+    }
+
+    public void setPlot(String plot) {
+        this.plot = plot;
+    }
+
+    public String getDirector() {
+        return director;
+    }
+
+    public void setDirector(String director) {
+        this.director = director;
     }
 
     @Override

@@ -1,18 +1,19 @@
 package com.krev.qwen_pet_movie_catalog.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.services.MovieService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import tools.jackson.databind.ObjectMapper;
+//import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 
@@ -46,7 +47,10 @@ public class MovieControllerTest {
     @Test
     void createMovie_success() throws Exception {
         MovieRequest request = new MovieRequest("title1", 1995, "Comedy");
-        MovieResponse response = new MovieResponse(34L, "title1", 1995, "Comedy", LocalDateTime.of(2026, 1, 15, 13, 0), LocalDateTime.of(2026, 1, 15, 13, 0));
+        MovieResponse response = new MovieResponse(34L, "title1", 1995, "Comedy",
+                null, null, null, null,
+                LocalDateTime.of(2026, 1, 15, 13, 0),
+                LocalDateTime.of(2026, 1, 15, 13, 0));
 
         when(movieService.createMovie(request)).thenReturn(response);
 

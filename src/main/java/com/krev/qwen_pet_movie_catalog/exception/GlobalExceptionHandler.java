@@ -1,6 +1,8 @@
 package com.krev.qwen_pet_movie_catalog.exception;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -16,6 +18,8 @@ import static org.springframework.http.HttpStatus.*;
 
 @RestControllerAdvice // @ControllerAdvice + @ResponseBody
 public class GlobalExceptionHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFound(EntityNotFoundException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -51,8 +55,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
-        // logger.error("Unexpected error", ex);    <-- log whole error for internal purposes
+        //save real detailed error to logs for internal investigation
+        LOGGER.error("Unexpected error", ex);
 
+        //return short customer-facing answer without technical details
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),
                 INTERNAL_SERVER_ERROR.value(),
