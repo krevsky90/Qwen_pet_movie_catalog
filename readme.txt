@@ -11,7 +11,10 @@ best practice:
     testImplementation "org.testcontainers:junit-jupiter:${testcontainersVersion}"  //it contains @Testcontainers
     testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
 2) для тестов юзаем assertj
- т.е. import static org.assertj.core.api.Assertions.assertThat;
+    т.е. import static org.assertj.core.api.Assertions.assertThat;
+2.2) для юнит-тестов правило:
+    если сервис модифицирует объект перед сохранением (например, обогащает данные) - всегда проверяйте состояние этого объекта через ArgumentCaptor
+    см MovieServiceTest # createMovie_shouldHandleExternalApiError_Gracefully
 3) аннотация @Transactional используется во всех методах сервиса, к-ые меняют данные
 4) добавить валидацию:
     @Valid для параметра метода в контроллере

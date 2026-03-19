@@ -1,5 +1,6 @@
 package com.krev.qwen_pet_movie_catalog.services;
 
+import com.krev.qwen_pet_movie_catalog.configuration.properties.OmdbProperties;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.entity.Movie;
@@ -7,20 +8,23 @@ import com.krev.qwen_pet_movie_catalog.external.omdb.OmdbClient;
 import com.krev.qwen_pet_movie_catalog.external.omdb.dto.OmdbResponse;
 import com.krev.qwen_pet_movie_catalog.mapper.MovieMapper;
 import com.krev.qwen_pet_movie_catalog.repo.MovieRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class MovieServiceTest {
@@ -30,22 +34,32 @@ public class MovieServiceTest {
     private MovieMapper movieMapper;
     @Mock
     private OmdbClient omdbClient;
+    @Mock
+    private OmdbProperties omdbProperties;
 
     @InjectMocks
     private MovieService movieService;
 
-    @Test
-    void shouldCreateMovie_shouldReturnCreatedStatusAndLocationHeader() {
-        //when
-        MovieRequest request = new MovieRequest("title1", 1995, "Comedy");
-        Movie entity = new Movie(null, "title1", 1995, "Comedy");
+    private static final String poster = "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg";
+    private static final String imdbRating = "8.8";
+    private static final String plot = "my_plot";
+    private static final String director = "Christopher Nolan";
 
-        String poster = "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg";
-        String imdbRating = "8.8";
-        String plot = "my_plot";
-        String director = "Christopher Nolan";
+    private Movie movie;
+    private OmdbResponse omdbResponse;
 
-        OmdbResponse omdbResponse = new OmdbResponse(
+    @Captor
+    private ArgumentCaptor<Movie> movieArgumentCaptor;
+
+    @BeforeEach
+    void init() {
+        movie = new Movie(34L, "title1", 1995, "Comedy");
+        movie.setPoster(poster);
+        movie.setImdbRating(imdbRating);
+        movie.setPlot(plot);
+        movie.setDirector(director);
+
+        omdbResponse = new OmdbResponse(
                 "title1",
                 "1995",
                 "PG-13",
@@ -65,10 +79,17 @@ public class MovieServiceTest {
                 null,
                 null,
                 null,
-                null,
+                "True", // для обогащения Movie в случае удачного вызова omdbApi
                 null
         );
-        Movie savedEntity = new Movie(34L, "title1", 1995, "Comedy");
+    }
+
+    @Test
+    void createMovie_shouldEnrichFromExternalApiAndReturnDto() {
+        //given
+        MovieRequest request = new MovieRequest("title1", 1995, "Comedy");
+        Movie entity = new Movie(null, "title1", 1995, "Comedy");
+//        Movie savedEntity = new Movie(34L, "title1", 1995, "Comedy");
         MovieResponse expectedResponse = new MovieResponse(34L, "title1", 1995, "Comedy",
                 poster, imdbRating, plot, director,
                 LocalDateTime.of(2026, 1, 15, 13, 0),
@@ -76,18 +97,133 @@ public class MovieServiceTest {
 
         when(movieMapper.toEntity(request)).thenReturn(entity);
         when(omdbClient.getMovieByTitleAndYear(any(), eq("title1"), eq(1995))).thenReturn(omdbResponse);
-        when(movieRepository.save(entity)).thenReturn(savedEntity);
-        when(movieMapper.toDto(savedEntity)).thenReturn(expectedResponse);
+//        when(movieRepository.save(any(Movie.class))).thenReturn(savedEntity);
+        // Устойчивый мок: возвращает тот же объект, который передали в save()
+        when(movieRepository.save(any(Movie.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        //act
+        when(movieMapper.toDto(any(Movie.class))).thenReturn(expectedResponse);
+
+        //when
         MovieResponse actualResponse = movieService.createMovie(request);
 
-        //assert
+        //then
         assertThat(actualResponse).isEqualTo(expectedResponse);
 
         verify(movieMapper).toEntity(request);
         verify(omdbClient).getMovieByTitleAndYear(any(), eq("title1"), eq(1995));
-        verify(movieRepository).save(entity);
-        verify(movieMapper).toDto(savedEntity);
+        verify(movieRepository).save(any(Movie.class));
+        verify(movieMapper).toDto(any(Movie.class));
+
+        // проверяем состояние Entity перед сохранением,
+        // т.к. если omdb enrichment все-таки произошел,
+        // то сохраняемый объект Movie будет иметь не null-евые поля poster, plot и пр
+        // поэтому мы проверяем поля сохраняемого объекта savedMovie, предварительно захватив его
+        verify(movieRepository).save(movieArgumentCaptor.capture());
+        Movie savedMovie = movieArgumentCaptor.getValue();
+        assertThat(savedMovie.getPoster()).isEqualTo(poster);
+        assertThat(savedMovie.getImdbRating()).isEqualTo(imdbRating);
+        assertThat(savedMovie.getPlot()).isEqualTo(plot);
+        assertThat(savedMovie.getDirector()).isEqualTo(director);
+    }
+
+    @Test
+    void createMovie_shouldHandleExternalApiError_Gracefully() {
+        MovieRequest request = new MovieRequest("title1", 1995, "Comedy");
+        Movie entity = new Movie(null, "title1", 1995, "Comedy");
+//        Movie savedEntity = new Movie(34L, "title1", 1995, "Comedy");
+        MovieResponse expectedResponseWithoutEnrichment = new MovieResponse(34L, "title1", 1995, "Comedy",
+                null, null, null, null,
+                LocalDateTime.of(2026, 1, 15, 13, 0),
+                LocalDateTime.of(2026, 1, 15, 13, 0));
+
+        when(movieMapper.toEntity(request)).thenReturn(entity);
+        when(omdbClient.getMovieByTitleAndYear(any(), eq("title1"), eq(1995))).thenThrow(new RuntimeException("API down"));
+
+//        when(movieRepository.save(entity)).thenReturn(savedEntity);
+        // Устойчивый мок: возвращает тот же объект, который передали в save()
+        when(movieRepository.save(any(Movie.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(movieMapper.toDto(any(Movie.class))).thenReturn(expectedResponseWithoutEnrichment);
+
+        //when
+        MovieResponse actualResponse = movieService.createMovie(request);
+
+        //then 1) DTO возвращён, сервис не упал
+        assertThat(actualResponse).isNotNull();
+        assertThat(actualResponse.title()).isEqualTo("title1");
+        assertThat(actualResponse.year()).isEqualTo(1995);
+
+        // then 2) Поля обогащения в DTO = null
+        assertThat(actualResponse.poster()).isNull();
+        assertThat(actualResponse.imdbRating()).isNull();
+        assertThat(actualResponse.plot()).isNull();
+        assertThat(actualResponse.director()).isNull();
+
+        // then 3) Верификация взаимодействий
+        verify(movieMapper).toEntity(request);
+        verify(omdbClient).getMovieByTitleAndYear(any(), eq("title1"), eq(1995));
+        verify(movieRepository).save(any(Movie.class));
+        verify(movieMapper).toDto(any(Movie.class));
+
+        // then 4) проверяем состояние Entity перед сохранением,
+        // что omdb enrichment все-таки произошел,
+        // тогда сохраняемый объект Movie будет иметь не null-евые поля poster, plot и пр
+        // поэтому мы проверяем поля сохраняемого объекта savedMovie, предварительно захватив его
+        verify(movieRepository).save(movieArgumentCaptor.capture());
+        Movie savedMovie = movieArgumentCaptor.getValue();
+
+        assertThat(savedMovie.getId()).isNull();           // ещё не сохранён
+        assertThat(savedMovie.getTitle()).isEqualTo("title1");
+        assertThat(savedMovie.getYear()).isEqualTo(1995);
+        assertThat(savedMovie.getGenre()).isEqualTo("Comedy");
+
+        // Поля обогащения должны быть null
+        assertThat(savedMovie.getPoster()).isNull();
+        assertThat(savedMovie.getImdbRating()).isNull();
+        assertThat(savedMovie.getPlot()).isNull();
+        assertThat(savedMovie.getDirector()).isNull();
+    }
+
+    @Test
+    void findMovieById_shouldReturnMovie_WhenExists() {
+        //given
+        Long movieId = movie.getId();
+        MovieResponse expectedResponse = new MovieResponse(34L, "title1", 1995, "Comedy",
+                poster, imdbRating, plot, director,
+                LocalDateTime.of(2026, 1, 15, 13, 0),
+                LocalDateTime.of(2026, 1, 15, 13, 0));
+
+        when(movieRepository.findById(movieId)).thenReturn(Optional.of(movie));
+        when(movieMapper.toDto(movie)).thenReturn(expectedResponse);
+
+        //when
+        Optional<MovieResponse> actualResponse = movieService.findMovieById(movieId);
+
+        //then
+        assertThat(actualResponse).isPresent()
+                .hasValueSatisfying(response -> {
+                            assertThat(response.id()).isEqualTo(movie.getId());
+                            assertThat(response.title()).isEqualTo(movie.getTitle());
+                        }
+                );
+
+        verify(movieRepository).findById(movie.getId());
+        verify(movieMapper).toDto(movie);
+    }
+
+    @Test
+    void findMovieById_shouldReturnEmpty_WhenNotFound() {
+        //given
+        Long movieId = 999L;
+        when(movieRepository.findById(movieId)).thenReturn(Optional.empty());
+
+        //when
+        Optional<MovieResponse> actualResponse = movieService.findMovieById(movieId);
+
+        //then
+        assertThat(actualResponse).isEmpty();
+
+        verify(movieRepository).findById(movieId);
+        verify(movieMapper, never()).toDto(any());
     }
 }
