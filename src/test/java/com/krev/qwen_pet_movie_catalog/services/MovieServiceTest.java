@@ -1,10 +1,9 @@
 package com.krev.qwen_pet_movie_catalog.services;
 
-import com.krev.qwen_pet_movie_catalog.configuration.properties.OmdbProperties;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.entity.Movie;
-import com.krev.qwen_pet_movie_catalog.external.omdb.OmdbClient;
+import com.krev.qwen_pet_movie_catalog.external.omdb.OmdbGateway;
 import com.krev.qwen_pet_movie_catalog.external.omdb.dto.OmdbResponse;
 import com.krev.qwen_pet_movie_catalog.mapper.MovieMapper;
 import com.krev.qwen_pet_movie_catalog.repo.MovieRepository;
@@ -23,7 +22,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,9 +31,7 @@ public class MovieServiceTest {
     @Mock
     private MovieMapper movieMapper;
     @Mock
-    private OmdbClient omdbClient;
-    @Mock
-    private OmdbProperties omdbProperties;
+    private OmdbGateway omdbGateway;
 
     @InjectMocks
     private MovieService movieService;
@@ -96,7 +92,7 @@ public class MovieServiceTest {
                 LocalDateTime.of(2026, 1, 15, 13, 0));
 
         when(movieMapper.toEntity(request)).thenReturn(entity);
-        when(omdbClient.getMovieByTitleAndYear(any(), eq("title1"), eq(1995))).thenReturn(omdbResponse);
+        when(omdbGateway.getMovieByTitleAndYear("title1", 1995)).thenReturn(omdbResponse);
 //        when(movieRepository.save(any(Movie.class))).thenReturn(savedEntity);
         // Устойчивый мок: возвращает тот же объект, который передали в save()
         when(movieRepository.save(any(Movie.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -110,7 +106,7 @@ public class MovieServiceTest {
         assertThat(actualResponse).isEqualTo(expectedResponse);
 
         verify(movieMapper).toEntity(request);
-        verify(omdbClient).getMovieByTitleAndYear(any(), eq("title1"), eq(1995));
+        verify(omdbGateway).getMovieByTitleAndYear("title1", 1995);
         verify(movieRepository).save(any(Movie.class));
         verify(movieMapper).toDto(any(Movie.class));
 
@@ -130,6 +126,31 @@ public class MovieServiceTest {
     void createMovie_shouldHandleExternalApiError_Gracefully() {
         MovieRequest request = new MovieRequest("title1", 1995, "Comedy");
         Movie entity = new Movie(null, "title1", 1995, "Comedy");
+        // fallback OmdbResponse, как вернул бы реальный Resilience4j при ошибке
+        OmdbResponse fallbackResponse = new OmdbResponse(
+                "title1",
+                "1995",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                List.of(),
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "N/A",
+                "False",
+                null
+        );
+
 //        Movie savedEntity = new Movie(34L, "title1", 1995, "Comedy");
         MovieResponse expectedResponseWithoutEnrichment = new MovieResponse(34L, "title1", 1995, "Comedy",
                 null, null, null, null,
@@ -137,7 +158,7 @@ public class MovieServiceTest {
                 LocalDateTime.of(2026, 1, 15, 13, 0));
 
         when(movieMapper.toEntity(request)).thenReturn(entity);
-        when(omdbClient.getMovieByTitleAndYear(any(), eq("title1"), eq(1995))).thenThrow(new RuntimeException("API down"));
+        when(omdbGateway.getMovieByTitleAndYear("title1", 1995)).thenReturn(fallbackResponse);
 
 //        when(movieRepository.save(entity)).thenReturn(savedEntity);
         // Устойчивый мок: возвращает тот же объект, который передали в save()
@@ -161,7 +182,7 @@ public class MovieServiceTest {
 
         // then 3) Верификация взаимодействий
         verify(movieMapper).toEntity(request);
-        verify(omdbClient).getMovieByTitleAndYear(any(), eq("title1"), eq(1995));
+        verify(omdbGateway).getMovieByTitleAndYear("title1", 1995);
         verify(movieRepository).save(any(Movie.class));
         verify(movieMapper).toDto(any(Movie.class));
 
