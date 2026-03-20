@@ -54,6 +54,9 @@ public class MovieServiceIntegrationTest {
         redisTemplate.getConnectionFactory().getConnection().serverCommands().flushDb();
     }
 
+    //todo: написать (и дописать) тесты
+    //ключ слово ТЕСТ 1: Первый вызов → cache miss → БД → результат сохраняется в кэш
+    //из чата https://chat.qwen.ai/c/314d58c3-a4bf-46df-bc5c-f2746e96371b
     @Test
     void findMovieById_shouldCacheResult() {
         //given

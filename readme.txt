@@ -133,6 +133,17 @@ best practice:
            @ConfigurationProperties(prefix = "external.omdb") - указывает, какие проперти буду читаться из application.properties
            @EnableConfigurationProperties(OmdbProperties.class) - говорит спрингу зарегистрировать этот класс как бин
            и внедрять его как бин
+10) для ретраев можно использовать  implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+    где есть и ретраи, и rate limiter...
+    НО в сочетании с feignClient оно работает сложно
+    a) последовательность аннотаций @Retry и @CircuitBreaker не гарантируют такую же последовательность обертывания
+    b) метод fallback должен быть в аннотации @Retry, а не @CircuitBreaker
+    c) Fallback должен быть ТОЛЬКО на внешнем слое (обычно Retry) - НЕ УВЕРЕН, что это правда!
+    d) сигнатура fallback метода д б такая же, как у оригинального метода + доп параметр Throwable throwable
+    e) АНТИПАТТЕРН писать retry + resilience в Feign. Feign д б просто HTTP client
+            а retry + resilience надо выносить в отдельный OmdbGateway или OmdbService
+    f) Retry и CircuitBreaker работают ТОЛЬКО ЕСЛИ исключение всплывает из Gateway => удаляем try catch в MovieService
+    инфо: https://chatgpt.com/c/69bd32da-c3d0-832d-9624-b351440b02a4
 
 Архитектурно:
 1) НЕ создаем статич классов. Создаем интерфейсы + их имплементацию-бины с @Component. так проще работать и тестить (замокать интерфейс)

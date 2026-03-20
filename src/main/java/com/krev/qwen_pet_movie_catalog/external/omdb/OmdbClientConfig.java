@@ -1,14 +1,24 @@
 package com.krev.qwen_pet_movie_catalog.external.omdb;
 
 import feign.Logger;
+import feign.Request;
 import org.slf4j.LoggerFactory;
 import org.slf4j.helpers.MessageFormatter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class OmdbClientConfig {
+    // Таймауты на уровне Feign
+    @Bean
+    public Request.Options feignOptions() {
+        return new Request.Options(
+                3000,  // connect timeout: 3 секунды
+                5000,  // read timeout: 5 секунд
+                true   // follow redirects
+        );
+    }
+
     //это логгирование для самого feign API, к-ое получает JSON-ответ
     // 🔥 Уровень 2: Feign Logger — генерирует логи запросов/ответов
     @Bean

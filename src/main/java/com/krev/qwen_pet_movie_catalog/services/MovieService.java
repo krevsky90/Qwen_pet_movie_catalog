@@ -1,10 +1,9 @@
 package com.krev.qwen_pet_movie_catalog.services;
 
-import com.krev.qwen_pet_movie_catalog.configuration.properties.OmdbProperties;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.entity.Movie;
-import com.krev.qwen_pet_movie_catalog.external.omdb.OmdbClient;
+import com.krev.qwen_pet_movie_catalog.external.omdb.OmdbGateway;
 import com.krev.qwen_pet_movie_catalog.external.omdb.dto.OmdbResponse;
 import com.krev.qwen_pet_movie_catalog.mapper.MovieMapper;
 import com.krev.qwen_pet_movie_catalog.repo.MovieRepository;
@@ -30,16 +29,14 @@ public class MovieService {
 
     private final MovieRepository repository;
     private final MovieMapper movieMapper;  //внедрится автоматически
-    private final OmdbClient omdbClient;
-    private final OmdbProperties omdbProperties;
+    private final OmdbGateway omdbGateway;
 
     //NOTE: После добавления MapStruct пересобери проект (./gradlew build),
     // иначе IDE может не видеть сгенерированный класс MovieMapperImpl
-    public MovieService(MovieRepository repository, MovieMapper movieMapper, OmdbClient omdbClient, OmdbProperties omdbProperties) {
+    public MovieService(MovieRepository repository, MovieMapper movieMapper, OmdbGateway omdbGateway) {
         this.repository = repository;
         this.movieMapper = movieMapper;
-        this.omdbClient = omdbClient;
-        this.omdbProperties = omdbProperties;
+        this.omdbGateway = omdbGateway;
     }
 
     @Transactional
@@ -100,9 +97,12 @@ public class MovieService {
         }
     }
 
+
+    //NOTE: Retry и CircuitBreaker работают только если исключение всплывает из Gateway,
+    //      не ловим его внутри enrichMovieFromExternalApi.
     private void enrichMovieFromExternalApi(Movie movie, String title, Integer year) {
-        try {
-            OmdbResponse externalData = omdbClient.getMovieByTitleAndYear(omdbProperties.apiKey(), title, year);
+//        try {
+            OmdbResponse externalData = omdbGateway.getMovieByTitleAndYear(title, year);
 
             if (TRUE.equalsIgnoreCase(externalData.response())) {
                 movie.setPoster(externalData.poster());
@@ -110,10 +110,10 @@ public class MovieService {
                 movie.setPlot(externalData.plot());
                 movie.setDirector(externalData.director());
             }
-        } catch (Exception ex) {
-            LOGGER.warn("Failed to enrich movie '{} ({})' from omdb: {}", title, year, ex.getMessage());
-            LOGGER.warn("", ex);
-            // Не прерываем создание фильма — просто без обогащения
-        }
+//        } catch (Exception ex) {
+//            LOGGER.warn("Failed to enrich movie '{} ({})' from omdb: {}", title, year, ex.getMessage());
+//            LOGGER.warn("", ex);
+//            // Не прерываем создание фильма — просто без обогащения
+//        }
     }
 }
