@@ -47,8 +47,8 @@ public class MovieControllerTest {
     @Test
     void createMovie_success() throws Exception {
         MovieRequest request = new MovieRequest("title1", 1995, "Comedy");
-        MovieResponse response = new MovieResponse(34L, "title1", 1995, "Comedy",
-                null, null, null, null,
+        MovieResponse response = new MovieResponse(34L, "title1 (1995)", 1995, "Comedy",
+                null, null, "UNKNOWN", null, null,
                 LocalDateTime.of(2026, 1, 15, 13, 0),
                 LocalDateTime.of(2026, 1, 15, 13, 0));
 
@@ -62,7 +62,7 @@ public class MovieControllerTest {
                 .andExpect(MockMvcResultMatchers.header().exists("Location"))
                 .andExpect(MockMvcResultMatchers.header().string("Location", Matchers.containsString("/api/v1/movies/34")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(34))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.title").value("title1"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.displayTitle").value("title1 (1995)"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.year").value(1995))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.genre").value("Comedy"));
 

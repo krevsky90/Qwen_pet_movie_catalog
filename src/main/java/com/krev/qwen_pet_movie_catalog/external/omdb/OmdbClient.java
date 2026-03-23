@@ -1,8 +1,6 @@
 package com.krev.qwen_pet_movie_catalog.external.omdb;
 
 import com.krev.qwen_pet_movie_catalog.external.omdb.dto.OmdbResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
