@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.3'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'com.krev'
@@ -21,6 +22,10 @@ repositories {
 ext {
     testcontainersVersion = '1.19.3'
     springCloudVersion = '2024.0.0'
+}
+
+jacoco {
+    toolVersion = "0.8.11"
 }
 
 dependencies {
@@ -63,6 +68,30 @@ dependencyManagement {
     imports {
         // Обязательно: BOM для управления версиями Spring Cloud
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true  // Для CI/CD
+        html.required = true // Для локальной отладки
+    }
+    // Исключаем конфигурацию, DTO и пр нетестируемое из покрытия
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/cache/config/**',
+                    '**/configuration/**',
+                    '**/dto/**',
+                    '**/entity/**',
+                    '**/exception/**',
+                    '**/external/omdb/dto/**',
+                    '**/external/omdb/OmdbClient.class',
+                    '**/external/omdb/OmdbClientConfig.class',
+                    '**/QwenPetMovieCatalogApplication.class'
+            ])
+        }))
     }
 }
 

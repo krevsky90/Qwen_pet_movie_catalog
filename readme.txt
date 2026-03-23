@@ -162,3 +162,6 @@ best practice:
 полезные команды:
 1) для прогона тестов:
     ./gradlew clean test
+1.2) и получения отчета jacoco:
+    ./gradlew jacocoTestReport
+    см build/reports/jacoco/test/html/index.html
