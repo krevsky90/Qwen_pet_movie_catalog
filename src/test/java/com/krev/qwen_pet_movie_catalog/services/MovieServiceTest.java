@@ -86,8 +86,8 @@ public class MovieServiceTest {
         MovieRequest request = new MovieRequest("title1", 1995, "Comedy");
         Movie entity = new Movie(null, "title1", 1995, "Comedy");
 //        Movie savedEntity = new Movie(34L, "title1", 1995, "Comedy");
-        MovieResponse expectedResponse = new MovieResponse(34L, "title1", 1995, "Comedy",
-                poster, imdbRating, plot, director,
+        MovieResponse expectedResponse = new MovieResponse(34L, "title1 (1995)", 1995, "Comedy",
+                poster, imdbRating, "UNKNOWN", plot, director,
                 LocalDateTime.of(2026, 1, 15, 13, 0),
                 LocalDateTime.of(2026, 1, 15, 13, 0));
 
@@ -152,8 +152,8 @@ public class MovieServiceTest {
         );
 
 //        Movie savedEntity = new Movie(34L, "title1", 1995, "Comedy");
-        MovieResponse expectedResponseWithoutEnrichment = new MovieResponse(34L, "title1", 1995, "Comedy",
-                null, null, null, null,
+        MovieResponse expectedResponseWithoutEnrichment = new MovieResponse(34L, "title1 (1995)", 1995, "Comedy",
+                null, null, "UNKNOWN", null, null,
                 LocalDateTime.of(2026, 1, 15, 13, 0),
                 LocalDateTime.of(2026, 1, 15, 13, 0));
 
@@ -171,7 +171,7 @@ public class MovieServiceTest {
 
         //then 1) DTO возвращён, сервис не упал
         assertThat(actualResponse).isNotNull();
-        assertThat(actualResponse.title()).isEqualTo("title1");
+        assertThat(actualResponse.displayTitle()).isEqualTo(movie.getTitle() + " (" + movie.getYear() + ")");
         assertThat(actualResponse.year()).isEqualTo(1995);
 
         // then 2) Поля обогащения в DTO = null
@@ -209,8 +209,8 @@ public class MovieServiceTest {
     void findMovieById_shouldReturnMovie_WhenExists() {
         //given
         Long movieId = movie.getId();
-        MovieResponse expectedResponse = new MovieResponse(34L, "title1", 1995, "Comedy",
-                poster, imdbRating, plot, director,
+        MovieResponse expectedResponse = new MovieResponse(34L, "title1 (1995)", 1995, "Comedy",
+                poster, imdbRating, "UNKNOWN", plot, director,
                 LocalDateTime.of(2026, 1, 15, 13, 0),
                 LocalDateTime.of(2026, 1, 15, 13, 0));
 
@@ -224,7 +224,7 @@ public class MovieServiceTest {
         assertThat(actualResponse).isPresent()
                 .hasValueSatisfying(response -> {
                             assertThat(response.id()).isEqualTo(movie.getId());
-                            assertThat(response.title()).isEqualTo(movie.getTitle());
+                            assertThat(response.displayTitle()).isEqualTo(movie.getTitle() + " (" + movie.getYear() + ")");
                         }
                 );
 
