@@ -171,7 +171,21 @@ best practice:
             3. Файл application-{profile}.properties
             4. Файл application.properties (база)
 
-
+14) добавление actuator-a позволяет:
+    - благодаря endpoint 'caches' делаем
+        curl http://localhost:8080/actuator/health
+        чтобы узнать, живы ли БД, приложение и пр
+    - благодаря endpoint 'caches' делаем
+        curl http://localhost:8080/actuator/metrics/cache.gets
+        # Метрики для конкретного кэша
+        curl http://localhost:8080/actuator/metrics/cache.gets?tag=name:movieById
+        curl http://localhost:8080/actuator/metrics/cache.gets?tag=result:hit
+        curl http://localhost:8080/actuator/metrics/cache.gets?tag=result:miss
+        чтобы посмотреть структуру кеша и статистику (но НЕ данные!)
+    - благодаря endpoint 'metrics' делаем
+        curl http://localhost:8080/actuator/metrics
+        чтобы узнать список доступных метрик.
+        и это будет источник данных для систем мониторинга (Prometheus, Datadog) и построения дашбордов
 
 Архитектурно:
 1) НЕ создаем статич классов. Создаем интерфейсы + их имплементацию-бины с @Component. так проще работать и тестить (замокать интерфейс)
