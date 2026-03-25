@@ -1,38 +1,68 @@
 services:
+  app:
+    build: .
+    container_name: pet-movie-catalog-app
+    ports:
+      - 8080:8080
+    environment:
+      # Активируем профиль - загрузится application-docker.properties
+      - SPRING_ACTIVE_PROFILE=docker
+      # override values from application.properties
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://movie-postgres:5432/movie_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATA_REDIS_HOST=movie-redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - EXTERNAL_OMDB_API_KEY=${OMDB_API_KEY} # reads from .env file
+      - EXTERNAL_OMDB_BASE_URL=https://www.omdbapi.com
+    depends_on:
+      movie-postgres:
+        condition: service_healthy
+      movie-redis:
+        condition: service_healthy
+    networks:
+      - movie-network
+
   movie-postgres:
     image: postgres:15
-    container_name: movie_container
+    container_name: movie-postgres-cont
     volumes:
       - pgdata:/var/lib/postgresql/data # Монтируем именованный том
     environment:
       POSTGRES_DB: movie_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    healthcheck:    # now it does not work. but for future
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
-    ports:
-      - "5432:5432"
+    networks:
+      - movie-network
 
   movie-redis:
     image: redis:7-alpine
-    container_name: movie-redis
+    container_name: movie-redis-cont
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes
     volumes:
       - redisdata:/data
-
-#  app:
-#    build: .
-#    depends_on:
-#      movie-postgres:
-#        condition: service_healthy
-
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - movie-network
 
 volumes:
   pgdata:  # Определение именованного тома
   redisdata:
+
+networks:
+  movie-network:
+    driver: bridge

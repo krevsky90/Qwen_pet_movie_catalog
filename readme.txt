@@ -148,6 +148,31 @@ best practice:
 11) для маппинга DTO <-> Entity используется mapstruct
     см пример и комментации маппингов не 1к1 в MovieMapper
 
+12) написать Dockerfile и docker-compose
+    см https://chatgpt.com/c/69c3b937-f868-8327-a2f9-b5263c5133a5
+
+    можно в application-docker.properties написать переменные (типа DB_HOST) с дефолтными значениями
+        spring.datasource.url=jdbc:postgresql://${DB_HOST:movie-postgres}:5432/${DB_NAME:movie_db}
+    а в docker-compose переопределить DB_HOST и DB_NAME
+        ИЛИ переопределить весь spring.datasource.url
+
+12.2) НЕ ХРАНИТЬ api key в src
+    a) а хранить в .env файле, и подтягивать оттуда в docker-compose через
+    - EXTERNAL_OMDB_API_KEY=${OMDB_API_KEY}
+    b) добавить .env в .gitignore, чтобы не хранить файл с api key в гите
+    с) во всех application.properties оставить external.omdb.api-key=${EXTERNAL_OMDB_API_KEY:}
+
+    и при локальном запуске в Idea добавить Environment Variables: EXTERNAL_OMDB_API_KEY=<YOUR_API_KEY>
+
+13) разделить конфигурации на application.properties, -docker.properties и пр,
+        иерархия чтения параметров у спринтбут приложения такая (на примере api key):
+            1. Аргументы командной строки (--external.omdb.api-key=...)
+            2. Переменные окружения ОС (EXTERNAL_OMDB_API_KEY=...)
+            3. Файл application-{profile}.properties
+            4. Файл application.properties (база)
+
+
+
 Архитектурно:
 1) НЕ создаем статич классов. Создаем интерфейсы + их имплементацию-бины с @Component. так проще работать и тестить (замокать интерфейс)
 ---------------
