@@ -3,6 +3,8 @@ package com.krev.qwen_pet_movie_catalog.controllers;
 import com.krev.qwen_pet_movie_catalog.dto.MovieRequest;
 import com.krev.qwen_pet_movie_catalog.dto.MovieResponse;
 import com.krev.qwen_pet_movie_catalog.services.MovieService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +17,7 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1/movies")
+@Tag(name = "Movies", description = "API to work with movies")
 public class MovieController {
     private final MovieService movieService;
 
@@ -23,6 +26,8 @@ public class MovieController {
     }
 
     @PostMapping
+    //we can add description to the method
+    @Operation(summary = "Create new movie ИЛИ создать новый фильм")
     public ResponseEntity<MovieResponse> createMovie(@RequestBody @Valid MovieRequest requestDto,
                                                      UriComponentsBuilder uriBuilder) {
         MovieResponse responseDto = movieService.createMovie(requestDto);
