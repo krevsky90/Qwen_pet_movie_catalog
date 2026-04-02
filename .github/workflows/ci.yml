@@ -80,3 +80,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           files: build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false  # Не ломать пайплайн, если загрузка поиска покрытия тестами для некого файла упала
+          verbose: true            # Подробные логи для отладки
+          name: codecov-umbrella  # Опционально: имя отчёта
