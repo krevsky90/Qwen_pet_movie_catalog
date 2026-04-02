@@ -47,7 +47,7 @@ public class MovieControllerTest {
     @Test
     void createMovie_success() throws Exception {
         MovieRequest request = new MovieRequest("title1", 1995, "Comedy");
-        MovieResponse response = new MovieResponse(34L, "title1 (1996)", 1995, "Comedy",
+        MovieResponse response = new MovieResponse(34L, "title1 (1995)", 1995, "Comedy",
                 null, null, "UNKNOWN", null, null,
                 LocalDateTime.of(2026, 1, 15, 13, 0),
                 LocalDateTime.of(2026, 1, 15, 13, 0));
