@@ -51,6 +51,17 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build -x test
 
+      - name: Check secrets are configured
+        run: |
+          if [ -z "$EXTERNAL_OMDB_API_KEY" ]; then
+            echo "Error: OMDB_API_KEY secret is not configured!"
+            echo "Please add it in Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "OMDB_API_KEY is configured"
+        env:
+          EXTERNAL_OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
+
       - name: Run tests
         run: ./gradlew test
         env:
@@ -59,6 +70,8 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: test
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
+          # secrets (take from github)
+          EXTERNAL_OMDB_API_KEY:  ${{ secrets.OMDB_API_KEY }}
 
       - name: Generate JaCoCo Report
         run: ./gradlew jacocoTestReport
