@@ -63,7 +63,7 @@ jobs:
           EXTERNAL_OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
 
       - name: Run tests
-        run: ./gradlew test
+        run: ./gradlew test --console=plain --info
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/test_db
           SPRING_DATASOURCE_USERNAME: test
