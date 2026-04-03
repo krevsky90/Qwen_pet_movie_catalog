@@ -1,6 +1,9 @@
 обучающий чат:
 https://chat.qwen.ai/c/314d58c3-a4bf-46df-bc5c-f2746e96371b
 
+доп чаты:
+    Spring profiles + flyway https://chatgpt.com/c/69ceb309-2348-8329-bf0a-4eedca4308a6
+
 info:
     MapStruct https://mapstruct.org/documentation/stable/reference/html/?spm=a2ty_o01.29997173.0.0.2cda5171R6uw0E
     Spring validation Guide https://docs.spring.io/spring-framework/reference/core/validation.html
