@@ -6,7 +6,7 @@ services:
       - 8080:8080
     environment:
       # Активируем профиль - загрузится application-docker.properties
-      - SPRING_ACTIVE_PROFILE=docker
+      - SPRING_PROFILES_ACTIVE=docker
       # override values from application.properties
       - SPRING_DATASOURCE_URL=jdbc:postgresql://movie-postgres:5432/movie_db
       - SPRING_DATASOURCE_USERNAME=postgres

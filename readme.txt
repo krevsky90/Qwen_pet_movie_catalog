@@ -131,8 +131,9 @@ best practice:
            НО тогда это надо будет делать во всех классах, где будет юзаться это значение
        b) создать record OmdbProperties c
            @ConfigurationProperties(prefix = "external.omdb") - указывает, какие проперти буду читаться из application.properties
-           @EnableConfigurationProperties(OmdbProperties.class) - говорит спрингу зарегистрировать этот класс как бин
-           и внедрять его как бин
+           @EnableConfigurationProperties(OmdbProperties.class) - говорит спрингу зарегистрировать этот класс как бин. и внедрять его как бин
+            NOTE: пишем EnableConfigurationProperties в OmdbClientConfig, а не Main! чтобы бин поднимался только там, где нужен)
+
 10) для ретраев можно использовать  implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
     где есть и ретраи, и rate limiter...
     НО в сочетании с feignClient оно работает сложно
@@ -160,16 +161,36 @@ best practice:
     a) а хранить в .env файле, и подтягивать оттуда в docker-compose через
     - EXTERNAL_OMDB_API_KEY=${OMDB_API_KEY}
     b) добавить .env в .gitignore, чтобы не хранить файл с api key в гите
-    с) во всех application.properties оставить external.omdb.api-key=${EXTERNAL_OMDB_API_KEY:}
+    с) в application-{profile}.properties, где нужно обращение к АПИ, пишем
+        * первой строкой spring.config.import=optional:file:.env[.properties]
+        * external.omdb.api-key=${OMDB_API_KEY}
+    NOTE: НЕ пишем значение по умолчанию = пустая строка!
+        т.к. если ключа нет, то будет падать не сразу при запуске,
+            а позже - при использовании. это плохо
+    NOTE:
 
     и при локальном запуске в Idea добавить Environment Variables: EXTERNAL_OMDB_API_KEY=<YOUR_API_KEY>
+        или (ЛУЧШЕ) SPRING_PROFILES_ACTIVE={profile} (например, SPRING_PROFILES_ACTIVE=local)
 
-13) разделить конфигурации на application.properties, -docker.properties и пр,
+13) разделить конфигурации по ПРОФИЛЯМ:
+    т.е. на application.properties, application-test.properties, application-docker.properties и пр,
         иерархия чтения параметров у спринтбут приложения такая (на примере api key):
             1. Аргументы командной строки (--external.omdb.api-key=...)
             2. Переменные окружения ОС (EXTERNAL_OMDB_API_KEY=...)
             3. Файл application-{profile}.properties
             4. Файл application.properties (база)
+
+13.2) чтобы тесты использовали профиль test, а не дефолтный application.properties, можно
+    a) Добавить профиль в конкретный тест:
+        @org.springframework.test.context.ActiveProfiles("test")
+        class MovieControllerTest
+    b) ИЛИ лучше - чтобы все тесты юзали test профиль - добавить в build.gradle
+            systemProperty "spring.profiles.active", "test"
+        и получить
+            tasks.named('test') {
+                useJUnitPlatform()
+                systemProperty "spring.profiles.active", "test"
+            }
 
 14) добавление actuator-a позволяет:
     - благодаря endpoint 'caches' делаем
@@ -190,6 +211,37 @@ best practice:
 15) добавить swagger для автодокументации АПИ
     посмотреть и воспользоваться можно по ссылке http://localhost:8080/swagger-ui/index.html
 
+16) добавить CI пайплайн:
+    см файл Qwen_pet_movie_catalog\.github\workflows\ci.yml
+
+    1) ВЫНЕСТИ секреты (типа omdb api key) в gitHub:
+        Репозиторий → Settings → Secrets and variables → Actions → New repository secret с именем OMDB_API_KEY
+        а в ci файле юзать EXTERNAL_OMDB_API_KEY: ${{ secrets.OMDB_API_KEY }}
+    2) выгружать артефакты test-report и coverage-report в github
+        Как скачать и открыть отчёт
+        Шаг 1: Открой пайплайн в GitHub
+            Перейди во вкладку Actions своего репозитория
+            Кликни на последний запуск (например, "CI Pipeline #42")
+            Найди задачу build-and-test
+        Шаг 2: Скачай артефакт
+            В правой верхней части страницы (или внизу шага) увидишь секцию Artifacts:
+
+17) при использовании любого профила (local/test/docker) БД либо есть, либо создается,
+    ПРОБЛЕМА: при этом НЕ создается таблица (movie)
+    РЕШЕНИЕ: юзаем flyway (+ flyway for postgres) и скрипт, создающий таблицу:
+        добавить зависимость в build.gradle
+        создать скрипт src/main/resources/db/migration/V1__create_movie_table.sql
+        добавить в нужные application.. properties
+            spring.flyway.enabled=true
+        поменять spring.jpa.hibernate.ddl-auto на validate
+    ПРОБЛЕМА: если же таблциа уже создана до внедрения flyway, то dlyway падает.
+        Мол, схема есть, а flyway_schema_history - нет
+    РЕШЕНИЕ:
+        добавить в application-docker.properties
+            # it adds existing DB schema (if it exists) as v1 in flyway_schema_history
+            # it is useful for cases when schema was created before flyway was introduced to the project
+            spring.flyway.baseline-on-migrate=true
+
 Архитектурно:
 1) НЕ создаем статич классов. Создаем интерфейсы + их имплементацию-бины с @Component. так проще работать и тестить (замокать интерфейс)
 ---------------
@@ -207,3 +259,18 @@ best practice:
 1.2) и получения отчета jacoco:
     ./gradlew jacocoTestReport
     см build/reports/jacoco/test/html/index.html
+
+=====================================
+КАК ЗАПУСКАТЬ:
+1) для разработки - с профилем local (предварительно надо локально запустить postgres и redis!)
+    конфигурация типа SpringBoot в идее:
+        главный класс: com.krev.qwen_pet_movie_catalog.QwenPetMovieCatalogApplication
+        Env variables: SPRING_PROFILES_ACTIVE=local
+2) для тестов - с профилем test
+    конфигурация типа Gradle в идее:
+        Run: test
+        Env variables: SPRING_PROFILES_ACTIVE=test
+3) все в докере:
+    ./gradlew clean build -x test
+    docker compose up --build
+

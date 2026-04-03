@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Testcontainers
 @Transactional
+//@org.springframework.test.context.ActiveProfiles("test")
 public class MovieServiceIntegrationTest {
     @Container
     @ServiceConnection

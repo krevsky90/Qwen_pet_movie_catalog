@@ -1,13 +1,16 @@
 package com.krev.qwen_pet_movie_catalog.external.omdb;
 
+import com.krev.qwen_pet_movie_catalog.configuration.properties.OmdbProperties;
 import feign.Logger;
 import feign.Request;
 import org.slf4j.LoggerFactory;
 import org.slf4j.helpers.MessageFormatter;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableConfigurationProperties(OmdbProperties.class)
 public class OmdbClientConfig {
     // Таймауты на уровне Feign
     @Bean
