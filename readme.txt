@@ -105,7 +105,7 @@ best practice:
         @Cacheable(value = "movies", key = "#id")
         public Movie getMovie(Long id) { ... }
         то
-        итоговый ключ в редисе movie:movies::55, где movie - key-prefix, movie - cacheName
+        итоговый ключ в редисе movie:movies::55, где movie - key-prefix, movies - cacheName
 
     6.2) внимание:
         @Transactional should be BEFORE @Caching!
@@ -262,6 +262,11 @@ best practice:
 1.2) и получения отчета jacoco:
     ./gradlew jacocoTestReport
     см build/reports/jacoco/test/html/index.html
+2) для сборки в докер:
+    ./gradlew clean build -x test
+    docker compose up --build
+3) подключиться к докер контейнеру для просмотра логов
+    docker exec -it <имя_контейнера> /bin/sh
 
 =====================================
 КАК ЗАПУСКАТЬ:
@@ -277,3 +282,30 @@ best practice:
     ./gradlew clean build -x test
     docker compose up --build
 
+=====================================
+Roadmap:
+0) поднимаем БД
+1) пишем entity + service + repository + application.properties (с настройками для работы с БД)
+1.2) в зависимости от кейсов пишем controller + responseDto + requestDto (с валидацией spring-boot-starter-validation)
+2) пишем маппер entity <-> responseDto
+3) добавляем логгирование
+4) пишем unit test-ы для уровня сервисов
+4.2) пишем slice тесты для веб и репо уровней
+    и добавляем профить application-test.properties (указывает тестовую БД, например, из TestContainer-ов репо-теста)
+4.3) пишем интеграционные тесты (@SpringBootTest + @Testcontainers)
+5) добавляем ExceptionHandler (c @RestControllerAdvice) для возврата красивого ответа в случае ошибки, без стектрейса
+6) для инициализации БД (создания схемы, таблиц) подключаем flyway и пишем миграционный скрипт в resources/db.migration
+7) создаем ci.yml
+8) создаем DockerFile для приложения
+9) создаем docker-compose.yml
+10) добавляем профили application-docker, application-local.properties
+11) добавляем swagger для документации АПИ
+12) добавляем actuator для healthcheck
+опционально:
+1) добавляем в сущности поля created_at и updated_at, заполняемые при помощи @EnableJpaAuditing и @EntityListeners(AuditingEntityListener.class)
+2) добавляем кеширование (в Redis): cacheConfig + CacheConstants + настройки в application... properties
+2.2) добавляем тестирование кеширования
+3) добавляем вызов внешнего АПИ (например, через FeignClient): client + responseDto + ClientConfig + Gateway/Service
+3.2) добавляем Retry + resilience4j для вызова внешнего АПИ
+3.3) храним АПИ ключ только в .env файле или в секретах github, инжектируем его в application...properties
+4) настроить grafana на основе данных из actuator-a
